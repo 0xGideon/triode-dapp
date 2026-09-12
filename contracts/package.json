@@ -1,0 +1,15 @@
+{
+  "name": "triode-contracts",
+  "version": "1.0.0",
+  "description": "TRIODE smart contracts (Hardhat)",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10"
+  }
+}
