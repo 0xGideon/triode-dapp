@@ -1,0 +1,69 @@
+.admin { background: #F5F4F2; min-height: 100vh; }
+
+.admin__nav {
+  background: var(--charcoal);
+  border-bottom: 1px solid #333;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin__nav-left { display: flex; align-items: center; gap: 8px; color: var(--white); font-weight: 700; font-size: 15px; }
+.admin__nav-left img { width: 24px; height: 24px; }
+.admin__badge {
+  background: #3A3A3A; color: #C9C6C1; font-size: 9px; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px;
+}
+.admin__nav-note { font-size: 10px; color: #9A9792; }
+.admin__wallet-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: #2B2B2B; border: 1px solid #3A3A3A; color: var(--white);
+  padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  width: fit-content;
+}
+.admin__wallet-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+.admin__content { padding: 20px 18px; }
+.admin__content h1 { font-size: 22px; margin-bottom: 6px; }
+.admin__intro { color: var(--text-gray); font-size: 12px; margin-bottom: 20px; }
+
+.admin__stat-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.admin__stat-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--white); }
+.admin__stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.admin__stat-value { font-size: 18px; font-family: 'Bricolage Grotesque', sans-serif; }
+.admin__stat-footnote { font-size: 10px; color: var(--text-muted); margin-top: 8px; }
+.admin__fund-button {
+  display: inline-block; margin-top: 10px; background: var(--orange); color: var(--white);
+  padding: 8px 16px; border-radius: 7px; font-size: 11.5px; font-weight: 700;
+}
+.admin__ratio-bar { display: flex; gap: 3px; height: 9px; border-radius: 3px; overflow: hidden; }
+.admin__status-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.admin__status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.admin__status-text { font-size: 13px; font-weight: 700; color: var(--green); }
+
+.admin__notice {
+  background: var(--orange-tint); border-radius: 10px; padding: 14px;
+  margin-bottom: 22px; font-size: 11px; color: #8A5228; line-height: 1.5;
+}
+
+.admin__content h2 { font-size: 15px; margin-bottom: 12px; }
+.admin__table-wrap { border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; background: var(--white); }
+.admin__table { border-collapse: collapse; font-size: 11px; white-space: nowrap; width: 100%; }
+.admin__table th {
+  padding: 10px 14px; background: #FAFAF9; color: var(--text-muted); font-weight: 700; text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.admin__table td { padding: 10px 14px; border-top: 1px solid var(--line); }
+.admin__table tbody tr:first-child td { border-top: none; }
+
+@media (min-width: 768px) {
+  .admin__nav { flex-direction: row; align-items: center; justify-content: space-between; padding: 16px 64px; }
+  .admin__content { padding: 44px 64px; }
+  .admin__content h1 { font-size: 26px; }
+  .admin__stat-grid { flex-direction: row; }
+  .admin__stat-card { flex: 1; padding: 22px; }
+  .admin__stat-value { font-size: 22px; }
+  .admin__content h2 { font-size: 17px; }
+  .admin__table { font-size: 13px; }
+  .admin__table th, .admin__table td { padding: 15px 22px; }
+}

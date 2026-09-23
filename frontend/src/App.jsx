@@ -5,6 +5,7 @@ import { wagmiConfig } from "./config/wagmi.js";
 import Home from "./pages/Home.jsx";
 import Dapp from "./pages/Dapp.jsx";
 import Info from "./pages/Info.jsx";
+import LaunchpadAdmin from "./pages/LaunchpadAdmin.jsx";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/app" element={<Dapp />} />
             <Route path="/info" element={<Info />} />
+            <Route path="/admin/launchpad" element={<LaunchpadAdmin />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
