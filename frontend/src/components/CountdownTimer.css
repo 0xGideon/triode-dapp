@@ -1,0 +1,26 @@
+.countdown-timer { display: flex; gap: 10px; }
+.countdown-timer__box {
+  flex: 0 0 auto;
+  min-width: 64px;
+  background: #1C1C1C;
+  border: 1px solid #3A3A3A;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.countdown-timer__value {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 17px;
+  color: var(--white);
+}
+.countdown-timer__label {
+  font-size: 8.5px;
+  color: #9A9792;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+@media (min-width: 768px) {
+  .countdown-timer__box { min-width: 76px; padding: 14px 20px; }
+  .countdown-timer__value { font-size: 22px; }
+  .countdown-timer__label { font-size: 10px; }
+}

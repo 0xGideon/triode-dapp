@@ -33,3 +33,5 @@ npm run dev
 ```
 
 Copy `.env.example` to `.env` and fill in your values before running.
+
+Whitepaper: https://bit.ly/TriodeWhitepaper

@@ -1,0 +1,72 @@
+.info { padding: 20px 18px; }
+.info h1 { font-size: 24px; margin-bottom: 12px; }
+.info__intro { font-size: 13px; color: var(--text-gray); line-height: 1.6; }
+
+.info__testnet-callout {
+  border: 1px solid var(--line); background: var(--white); border-radius: 10px;
+  padding: 14px 16px; margin-top: 18px;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--text-gray);
+}
+.info__testnet-link { font-weight: 700; color: var(--orange-dark); white-space: nowrap; font-size: 12px; }
+.info__testnet-link--disabled { color: var(--text-muted); }
+
+.info h2 { font-size: 16px; margin-top: 28px; margin-bottom: 12px; }
+.info__steps { display: flex; flex-direction: column; gap: 12px; }
+.info__step { border-left: 2px solid var(--orange); padding-left: 12px; }
+.info__step-title { font-size: 12.5px; font-weight: 700; }
+.info__step p:not(.info__step-title) { font-size: 11.5px; color: var(--text-gray); margin-top: 2px; }
+
+.info__whitepaper-card {
+  border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+  background: var(--white); display: flex; align-items: center; gap: 14px;
+}
+.info__whitepaper-icon {
+  width: 42px; height: 42px; border-radius: 9px; background: var(--orange-tint);
+  flex-shrink: 0;
+}
+.info__whitepaper-text { flex: 1; }
+.info__whitepaper-title { font-size: 12.5px; font-weight: 700; }
+.info__whitepaper-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+.info__whitepaper-button {
+  background: var(--charcoal); color: var(--white); padding: 9px 14px; border-radius: 7px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.info__whitepaper-button--disabled { background: var(--line); color: var(--text-muted); }
+
+.info__launchpad-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--white); }
+.info__launchpad-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.info__launchpad-desc { font-size: 11.5px; color: var(--text-gray); line-height: 1.5; }
+.info__launchpad-balance p:first-child { font-size: 10.5px; color: var(--text-muted); }
+.info__launchpad-balance-value { font-size: 14px; font-family: 'Bricolage Grotesque', sans-serif; color: var(--orange-dark); margin-top: 4px; }
+.info__launchpad-balance-note { font-size: 9.5px; color: var(--text-muted); margin-top: 2px; }
+.info__launchpad-bar { display: flex; gap: 3px; height: 10px; border-radius: 4px; overflow: hidden; }
+.info__launchpad-bar-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 9.5px; color: var(--text-muted); }
+.info__launchpad-seeded-row {
+  display: flex; justify-content: space-between; margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--line); font-size: 12px; color: var(--text-gray);
+}
+.info__launchpad-seeded-row span:last-child { font-weight: 700; color: var(--text-dark); }
+
+.info__network-grid { display: flex; flex-direction: column; gap: 12px; }
+.info__network-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--white); }
+.info__network-title { font-size: 12px; font-weight: 700; color: var(--text-gray); margin-bottom: 10px; }
+.info__network-title--mainnet { color: var(--orange-dark); }
+.info__network-rows { font-size: 11px; color: var(--text-gray); display: flex; flex-direction: column; gap: 6px; }
+.info__network-rows div { display: flex; justify-content: space-between; }
+.info__network-rows span:last-child { font-weight: 700; color: var(--text-dark); }
+
+@media (min-width: 768px) {
+  .info { padding: 56px 64px 20px; max-width: 1100px; }
+  .info h1 { font-size: 34px; }
+  .info__intro { font-size: 15px; max-width: 680px; }
+  .info__testnet-callout { max-width: 680px; padding: 18px 24px; font-size: 13.5px; }
+  .info__two-col { display: flex; gap: 60px; margin-top: 56px; }
+  .info__two-col > div { flex: 1; }
+  .info h2 { font-size: 19px; }
+  .info__whitepaper-card { padding: 26px; }
+  .info__launchpad-card { padding: 26px; }
+  .info__launchpad-top { flex-direction: row; justify-content: space-between; align-items: center; }
+  .info__network-grid { flex-direction: row; gap: 24px; }
+  .info__network-card { flex: 1; padding: 22px 26px; }
+}

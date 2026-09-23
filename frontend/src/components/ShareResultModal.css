@@ -1,0 +1,48 @@
+.share-modal__status { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 12.5px; font-weight: 700; color: var(--green); }
+.share-modal__check {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--green); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+
+.share-modal__card {
+  background: var(--charcoal);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.share-modal__watermark { position: absolute; top: -40px; right: -50px; width: 180px; opacity: 0.08; }
+.share-modal__card-content { position: relative; }
+.share-modal__card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+.share-modal__card-header img { width: 16px; height: 16px; }
+.share-modal__card-header span:nth-child(2) { font-size: 11px; font-weight: 700; color: var(--white); }
+.share-modal__round { font-size: 9.5px; color: #9A9792; margin-left: auto; }
+.share-modal__result-label { font-size: 10px; color: var(--orange-light); font-weight: 700; margin-bottom: 5px; }
+.share-modal__amount { font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; color: var(--white); margin-bottom: 4px; }
+.share-modal__stake-line { font-size: 11px; color: #B8B5B0; }
+.share-modal__stats {
+  display: flex; gap: 16px;
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid #3A3A3A;
+}
+.share-modal__stats p:first-child { font-size: 9px; color: #9A9792; }
+.share-modal__stat-value { font-size: 13px; font-weight: 700; color: var(--white); margin-top: 2px; }
+.share-modal__stat-value--green { color: var(--green); }
+
+.share-modal__privacy { font-size: 11px; color: var(--text-gray); text-align: center; margin-bottom: 16px; }
+.share-modal__actions { display: flex; gap: 10px; }
+.share-modal__download, .share-modal__share {
+  flex: 1; text-align: center; padding: 14px; border-radius: 9px; font-weight: 700; font-size: 12.5px;
+}
+.share-modal__download { background: #F2F1EF; color: var(--text-dark); }
+.share-modal__share { background: var(--orange); color: var(--white); }
+
+@media (min-width: 768px) {
+  .share-modal__card { padding: 28px; }
+  .share-modal__amount { font-size: 38px; }
+  .share-modal__stake-line { font-size: 12.5px; }
+  .share-modal__download, .share-modal__share { font-size: 13.5px; }
+}

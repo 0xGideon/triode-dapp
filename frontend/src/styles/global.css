@@ -1,0 +1,55 @@
+:root {
+  --orange: #FF6A00;
+  --orange-dark: #C44A00;
+  --orange-light: #FF8C33;
+  --orange-tint: #FFEDE0;
+  --charcoal: #1C1C1C;
+  --charcoal-2: #2B2B2B;
+  --text-dark: #1C1C1C;
+  --text-gray: #5B5B5B;
+  --text-muted: #8F8F8F;
+  --line: #E6E4E1;
+  --bg: #FCFBF9;
+  --white: #FFFFFF;
+  --green: #2E7D32;
+  --green-tint: #E8F3E8;
+  --blue: #1565C0;
+  --blue-tint: #E7F0FB;
+  --red: #C62828;
+  --red-tint: #FBEAEA;
+}
+
+/*
+  BREAKPOINT CONVENTION FOR THIS ENTIRE PROJECT — read before writing any CSS:
+  We write mobile-first. Base (unprefixed) rules are the PHONE layout.
+  We then scale UP using min-width media queries:
+    @media (min-width: 768px)  { ... }  // tablet and up
+    @media (min-width: 1024px) { ... }  // desktop
+  Never write max-width overrides or desktop-first CSS in this project.
+*/
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+h1, h2, h3 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+}
+
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 18px;
+}
+@media (min-width: 1024px) {
+  .container { padding: 0 64px; }
+}
