@@ -23,6 +23,14 @@ contract TriodeMarket {
     /// @dev Solidity enums are numbered from 0: Option.A == 0, Option.B == 1, Option.C == 2.
     enum Option { A, B, C }
 
+    // Custom errors are cheaper in gas than `require` with a string message, because the
+    // error message text is not stored in the contract bytecode. That's why we use them here.
+    error ZeroDeposit();
+    error ExceedsMaxStake(uint256 attempted, uint256 max);
+
+    event RoundStarted(uint256 indexed roundId, uint256 startTime, uint256 endTime);
+    event Deposited(uint256 indexed roundId, address indexed user, Option option, uint256 grossAmount, uint256 netAmount, uint256 fee);
+
     /// @notice All the information about a single round.
     /// @dev We store rounds in a mapping (keyed by roundId) rather than an array because
     ///      this struct contains mappings, and Solidity does not allow an array of structs
@@ -92,6 +100,89 @@ contract TriodeMarket {
 
     /// @notice The Launchpad balance, used to seed early rounds. Declared now, used in a later step.
     uint256 public launchpadBalance;
+
+    /// @notice Total admin fee revenue collected so far (in wei).
+    /// @dev This simply accumulates the 10% fee from every deposit. Withdrawing it is a later step.
+    uint256 public collectedFees;
+
+    /// @notice Opens a brand-new round by advancing currentRoundId and recording its timestamps.
+    /// @dev We can't assign a whole struct literal to `rounds[currentRoundId]` because `Round`
+    ///      contains mappings, so we set each non-mapping field one at a time instead.
+    function startRound() internal {
+        currentRoundId += 1;
+
+        Round storage r = rounds[currentRoundId];
+        r.roundId = currentRoundId;
+        r.startTime = block.timestamp;
+        r.endTime = block.timestamp + ROUND_DURATION;
+        r.resolved = false;
+        r.closed = false;
+
+        emit RoundStarted(currentRoundId, r.startTime, r.endTime);
+    }
+
+    /// @notice Lets a user deposit ETH into a chosen option for the current round.
+    /// @dev This uses "lazy" round advancement: since there is no off-chain keeper bot yet, the
+    ///      contract only checks/advances round state when someone actually calls deposit().
+    ///      A keeper/poke function could be added later so rounds can advance even with zero
+    ///      deposits, but that's out of scope for now.
+    ///      NOTE: no reentrancy guard yet — deposit() only RECEIVES ETH and never sends any, so
+    ///      there is no reentrancy risk. We'll add a guard when we write withdraw(), which sends ETH.
+    function deposit(Option option) external payable {
+        // Step A — advance the round if needed (lazy round progression).
+        if (
+            currentRoundId == 0 ||
+            rounds[currentRoundId].closed ||
+            block.timestamp >= rounds[currentRoundId].endTime
+        ) {
+            // If the round expired by time but was never marked closed, mark it closed first.
+            if (
+                currentRoundId != 0 &&
+                block.timestamp >= rounds[currentRoundId].endTime &&
+                !rounds[currentRoundId].closed
+            ) {
+                rounds[currentRoundId].closed = true;
+            }
+            startRound();
+        }
+
+        // Step B — validate the deposit (can't deposit zero ETH).
+        if (msg.value == 0) {
+            revert ZeroDeposit();
+        }
+
+        // Step C — calculate the 10% fee and the net (post-fee) amount.
+        uint256 fee = (msg.value * ADMIN_FEE_BPS) / 10_000;
+        uint256 netAmount = msg.value - fee;
+
+        // Step D — enforce the per-wallet, per-option cap on the NET amount.
+        if (userStake[currentRoundId][msg.sender][option] + netAmount > MAX_STAKE_PER_OPTION) {
+            revert ExceedsMaxStake(
+                userStake[currentRoundId][msg.sender][option] + netAmount,
+                MAX_STAKE_PER_OPTION
+            );
+        }
+
+        // Step E — count new participants (each unique address counts once per option per round).
+        if (!hasDeposited[currentRoundId][msg.sender][option]) {
+            hasDeposited[currentRoundId][msg.sender][option] = true;
+            rounds[currentRoundId].participantCount[option] += 1;
+        }
+
+        // Step F — bookkeeping: record the stake, the option total, the round volume, and the fee.
+        userStake[currentRoundId][msg.sender][option] += netAmount;
+        rounds[currentRoundId].totalDeposited[option] += netAmount;
+        rounds[currentRoundId].totalVolume += netAmount;
+        collectedFees += fee;
+
+        // Step G — check for an early close once total volume hits the 100 ETH cap.
+        if (rounds[currentRoundId].totalVolume >= EARLY_CLOSE_VOLUME) {
+            rounds[currentRoundId].closed = true;
+        }
+
+        // Step H — emit the deposit event.
+        emit Deposited(currentRoundId, msg.sender, option, msg.value, netAmount, fee);
+    }
 
     /// @notice Sets the admin to whoever deploys the contract.
     // TODO: accept launchpad countdown duration as a constructor parameter in a later step (network-dependent: 24 hours on testnet, mainnet value TBD)
