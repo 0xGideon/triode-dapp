@@ -27,9 +27,12 @@ contract TriodeMarket {
     // error message text is not stored in the contract bytecode. That's why we use them here.
     error ZeroDeposit();
     error ExceedsMaxStake(uint256 attempted, uint256 max);
+    error RoundNotYetClosed(uint256 roundId);
+    error RoundAlreadyResolved(uint256 roundId);
 
     event RoundStarted(uint256 indexed roundId, uint256 startTime, uint256 endTime);
     event Deposited(uint256 indexed roundId, address indexed user, Option option, uint256 grossAmount, uint256 netAmount, uint256 fee);
+    event RoundResolved(uint256 indexed roundId, bool aWon, bool bWon, bool cWon, uint256 winningPoolTotal);
 
     /// @notice All the information about a single round.
     /// @dev We store rounds in a mapping (keyed by roundId) rather than an array because
@@ -57,6 +60,16 @@ contract TriodeMarket {
         mapping(Option => uint256) participantCount;
         /// @notice Sum of all three `totalDeposited` values. Cached so we don't have to loop.
         uint256 totalVolume;
+        /// @notice Whether each option was a winner. Normally only one option wins, but ties are
+        ///         possible: if two options are tied for least-deposited, BOTH are winners; if all
+        ///         three are tied, ALL THREE are winners. Keyed by Option.
+        mapping(Option => bool) isWinningOption;
+        /// @notice The combined totalDeposited of every winning option. Used by withdraw() (a later
+        ///         step) to compute each winner's payout. See the payout formula explained below.
+        uint256 winningPoolTotal;
+        /// @notice The timestamp resolveRound() was called. Used later to enforce the 3.5-day
+        ///         withdrawal window (WITHDRAWAL_WINDOW) before rewards roll forward.
+        uint256 resolvedTime;
     }
 
     /// @notice All rounds, keyed by their roundId. `rounds[1]` is round #1, etc.
@@ -182,6 +195,77 @@ contract TriodeMarket {
 
         // Step H — emit the deposit event.
         emit Deposited(currentRoundId, msg.sender, option, msg.value, netAmount, fee);
+    }
+
+    // PAYOUT FORMULA (used by withdraw(), a later step):
+    //   payout = userStake[roundId][user][option] * r.totalVolume / r.winningPoolTotal
+    // This single formula correctly handles all three cases:
+    //   - One winner: winningPoolTotal == that option's total, so each winner gets their stake back
+    //     plus a share of the two losing pools, proportional to their stake within the winning option.
+    //   - Two-way tie: winningPoolTotal == the sum of both tied options' totals, so the third
+    //     (losing) option's pool is split between the two tied options' stakers, proportional to
+    //     each staker's share of the combined winning pool.
+    //   - Three-way tie: winningPoolTotal == totalVolume (no losers exist), so the formula reduces to
+    //     payout == userStake, meaning everyone simply gets their own net deposit back.
+    // This function only ever reads from an option a user actually staked in; a user who staked in a
+    // losing option gets 0 from that option, which withdraw() will handle by checking isWinningOption.
+
+    /// @notice Resolves a round by finding the least-deposited option(s).
+    /// @dev Permissionless — anyone may call it because the outcome is fully deterministic from data
+    ///      already stored on-chain (no oracle needed). The round must be closed first.
+    function resolveRound(uint256 roundId) external {
+        Round storage r = rounds[roundId];
+
+        // 1. Can't resolve a round that's already been resolved.
+        if (r.resolved) {
+            revert RoundAlreadyResolved(roundId);
+        }
+
+        // 2. The round must be closed before it can be resolved. It counts as closed if EITHER
+        //    r.closed is already true, OR the round expired by time (block.timestamp >= r.endTime).
+        if (!r.closed && block.timestamp < r.endTime) {
+            revert RoundNotYetClosed(roundId);
+        }
+        // If it qualifies only via the time-expiry path, flip the closed flag now.
+        if (!r.closed) {
+            r.closed = true;
+        }
+
+        // 3. Read the three option totals into locals for clarity (no loops needed for 3 values).
+        uint256 a = r.totalDeposited[Option.A];
+        uint256 b = r.totalDeposited[Option.B];
+        uint256 c = r.totalDeposited[Option.C];
+
+        // 4. Find the minimum of the three.
+        uint256 minVal = a;
+        if (b < minVal) minVal = b;
+        if (c < minVal) minVal = c;
+
+        // 5. Determine which option(s) match that minimum — this yields 1, 2, or 3 winners on ties.
+        bool aWon = (a == minVal);
+        bool bWon = (b == minVal);
+        bool cWon = (c == minVal);
+
+        // 6. Store the results.
+        r.isWinningOption[Option.A] = aWon;
+        r.isWinningOption[Option.B] = bWon;
+        r.isWinningOption[Option.C] = cWon;
+        r.winningPoolTotal = (aWon ? a : 0) + (bWon ? b : 0) + (cWon ? c : 0);
+
+        // 7. Set the single `winner` field ONLY when exactly one option won. This keeps that field
+        //    meaningful for the common case and easy front-end display, while isWinningOption remains
+        //    the authoritative source of truth for payout math (including ties).
+        uint8 winnerCount = (aWon ? 1 : 0) + (bWon ? 1 : 0) + (cWon ? 1 : 0);
+        if (winnerCount == 1) {
+            r.winner = aWon ? Option.A : (bWon ? Option.B : Option.C);
+        }
+
+        // 8. Mark resolved and record when, so withdraw() can enforce the withdrawal window later.
+        r.resolved = true;
+        r.resolvedTime = block.timestamp;
+
+        // 9. Emit the resolution event.
+        emit RoundResolved(roundId, aWon, bWon, cWon, r.winningPoolTotal);
     }
 
     /// @notice Sets the admin to whoever deploys the contract.

@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, network } = require("hardhat");
 
 describe("TriodeMarket", function () {
   let triode;
@@ -41,5 +41,108 @@ describe("TriodeMarket", function () {
     await expect(
       triode.connect(user).deposit(0, { value: ethers.parseEther("2") })
     ).to.be.revertedWithCustomError(triode, "ExceedsMaxStake");
+  });
+
+  async function fastForward(seconds) {
+    await network.provider.send("evm_increaseTime", [seconds]);
+    await network.provider.send("evm_mine");
+  }
+
+  // NOTE: isWinningOption is a mapping INSIDE the Round struct, so Solidity does NOT auto-generate
+  // a getter for it (the rounds(roundId) getter only returns non-mapping members). To verify the
+  // winner determination, we read the RoundResolved event's aWon/bWon/cWon args — resolveRound sets
+  // those from the exact same booleans it writes into isWinningOption — plus the struct getter's
+  // winner / winningPoolTotal / totalVolume fields.
+  async function getRoundResolvedArgs(tx) {
+    const receipt = await tx.wait();
+    for (const log of receipt.logs) {
+      try {
+        const parsed = triode.interface.parseLog(log);
+        if (parsed && parsed.name === "RoundResolved") return parsed.args;
+      } catch (e) {
+        // Ignore logs we can't parse (they're from other events/contracts).
+      }
+    }
+    return null;
+  }
+
+  it("single winner: least-deposited option wins, winningPoolTotal matches it, winner set", async function () {
+    // A is lowest (1 ETH), B and C are higher.
+    await triode.connect(user).deposit(0, { value: ethers.parseEther("1") }); // A
+    await triode.connect(user).deposit(1, { value: ethers.parseEther("2") }); // B
+    await triode.connect(user).deposit(2, { value: ethers.parseEther("3") }); // C
+
+    await fastForward(4 * 24 * 60 * 60); // 4 days > 3.5 day duration
+    const tx = await triode.resolveRound(1);
+    const args = await getRoundResolvedArgs(tx);
+
+    // A won, B and C lost.
+    expect(args.aWon).to.equal(true);
+    expect(args.bWon).to.equal(false);
+    expect(args.cWon).to.equal(false);
+    expect(args.winningPoolTotal).to.equal(ethers.parseEther("0.9"));
+
+    // The struct getter exposes winner and winningPoolTotal (both non-mapping fields).
+    const r = await triode.rounds(1);
+    expect(r.winner).to.equal(0); // Option.A == 0
+    expect(r.winningPoolTotal).to.equal(ethers.parseEther("0.9")); // A's net total (1 * 0.9)
+    expect(r.resolved).to.equal(true);
+  });
+
+  it("two-way tie: both least-deposited options win and winningPoolTotal is their sum", async function () {
+    // A and B are equal and lowest, C is higher.
+    await triode.connect(user).deposit(0, { value: ethers.parseEther("1") }); // A
+    await triode.connect(user).deposit(1, { value: ethers.parseEther("1") }); // B
+    await triode.connect(user).deposit(2, { value: ethers.parseEther("3") }); // C
+
+    await fastForward(4 * 24 * 60 * 60);
+    const tx = await triode.resolveRound(1);
+    const args = await getRoundResolvedArgs(tx);
+
+    expect(args.aWon).to.equal(true);
+    expect(args.bWon).to.equal(true);
+    expect(args.cWon).to.equal(false);
+    expect(args.winningPoolTotal).to.equal(ethers.parseEther("1.8")); // 0.9 + 0.9
+
+    const r = await triode.rounds(1);
+    expect(r.winningPoolTotal).to.equal(ethers.parseEther("1.8"));
+  });
+
+  it("three-way tie: all three win and winningPoolTotal equals totalVolume", async function () {
+    await triode.connect(user).deposit(0, { value: ethers.parseEther("1") }); // A
+    await triode.connect(user).deposit(1, { value: ethers.parseEther("1") }); // B
+    await triode.connect(user).deposit(2, { value: ethers.parseEther("1") }); // C
+
+    await fastForward(4 * 24 * 60 * 60);
+    const tx = await triode.resolveRound(1);
+    const args = await getRoundResolvedArgs(tx);
+
+    expect(args.aWon).to.equal(true);
+    expect(args.bWon).to.equal(true);
+    expect(args.cWon).to.equal(true);
+
+    const r = await triode.rounds(1);
+    expect(r.winningPoolTotal).to.equal(r.totalVolume);
+  });
+
+  it("resolving an already-resolved round reverts with RoundAlreadyResolved", async function () {
+    await triode.connect(user).deposit(0, { value: ethers.parseEther("1") });
+    await fastForward(4 * 24 * 60 * 60);
+    await triode.resolveRound(1);
+
+    await expect(triode.resolveRound(1)).to.be.revertedWithCustomError(
+      triode,
+      "RoundAlreadyResolved"
+    );
+  });
+
+  it("resolving a not-yet-closed round reverts with RoundNotYetClosed", async function () {
+    await triode.connect(user).deposit(0, { value: ethers.parseEther("1") });
+
+    // Time has NOT elapsed and volume has NOT hit the cap -> still open.
+    await expect(triode.resolveRound(1)).to.be.revertedWithCustomError(
+      triode,
+      "RoundNotYetClosed"
+    );
   });
 });
